@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Math Challenge</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      background: white;
+      padding: 50px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      max-width: 700px;
+      width: 100%;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 40px;
+    }
+
+    .button {
+      display: block;
+      width: 70%;
+      margin: 20px auto;
+      padding: 18px;
+      font-size: 18px;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background-color: #007BFF;
+      color: white;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #question {
+      font-size: 36px;
+      margin-bottom: 40px;
+    }
+
+    #answerSection {
+      margin-bottom: 30px;
+    }
+
+    #answerInput {
+      font-size: 24px;
+      padding: 10px;
+      width: 140px;
+      text-align: center;
+    }
+
+    #feedback {
+      width: 250px;
+      height: 50px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 40px auto;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .correct {
+      color: white;
+      background-color: green;
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+
+    .wrong {
+      color: white;
+      background-color: red;
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 40px;
+    }
+
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: center;
+    }
+
+    #summaryStats {
+      margin-top: 30px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Home State -->
+  <div id="homeState">
+    <h1>Math Game Menu</h1>
+    <button class="button" onclick="startChallenge(1)">Math challenge - level 1</button>
+    <button class="button" onclick="startChallenge(2)">Math challenge - level 2</button>
+  </div>
+
+  <!-- Math Challenge State -->
+  <div id="challengeState" class="hidden">
+    <div id="question"></div>
+
+    <div id="answerSection">
+      <input type="number" id="answerInput" placeholder="Answer" autofocus />
+    </div>
+
+    <div id="feedback"></div>
+
+    <div style="margin-top: 60px;">
+      <button class="button" onclick="goToSummary()">End</button>
+    </div>
+  </div>
+
+  <!-- Summary State -->
+  <div id="summaryState" class="hidden">
+    <h2>Performance Report</h2>
+    <div id="summaryStats"></div>
+    <table>
+      <thead>
+      <tr>
+        <th>Question</th>
+        <th>Answer</th>
+        <th>Time (s)</th>
+        <th>Correct on First Try</th>
+      </tr>
+      </thead>
+      <tbody id="summaryTableBody"></tbody>
+    </table>
+    <button class="button" onclick="goToHome()">Back to Home</button>
+  </div>
+</div>
+
+<script>
+  let num1, num2, correctAnswer, startTime;
+  let attemptCount = 0;
+  let log = [];
+  let currentLevel = 1;
+
+  const questionEl = document.getElementById('question');
+  const inputEl = document.getElementById('answerInput');
+  const feedbackEl = document.getElementById('feedback');
+  const summaryEl = document.getElementById('summaryState');
+  const tableBody = document.getElementById('summaryTableBody');
+  const summaryStats = document.getElementById('summaryStats');
+
+  function goToHome() {
+    document.getElementById('homeState').classList.remove('hidden');
+    document.getElementById('challengeState').classList.add('hidden');
+    summaryEl.classList.add('hidden');
+  }
+
+  function startChallenge(level) {
+    currentLevel = level;
+    log = [];
+    document.getElementById('homeState').classList.add('hidden');
+    document.getElementById('challengeState').classList.remove('hidden');
+    feedbackEl.textContent = '';
+    feedbackEl.className = '';
+    generateQuestion();
+    inputEl.focus();
+  }
+
+  function goToSummary() {
+    document.getElementById('challengeState').classList.add('hidden');
+    summaryEl.classList.remove('hidden');
+    renderSummary();
+  }
+
+  function generateQuestion() {
+    const min = 1;
+    const max = currentLevel === 1 ? 5 : 9;
+    num1 = Math.floor(Math.random() * (max - min + 1)) + min;
+    num2 = Math.floor(Math.random() * (max - min + 1)) + min;
+    correctAnswer = num1 + num2;
+    questionEl.textContent = `${num1} + ${num2} = ?`;
+    feedbackEl.textContent = '';
+    feedbackEl.className = '';
+    inputEl.value = '';
+    inputEl.focus();
+    attemptCount = 0;
+    startTime = Date.now();
+  }
+
+  inputEl.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      const userAnswer = parseInt(inputEl.value);
+      if (isNaN(userAnswer)) return;
+
+      attemptCount += 1;
+      if (userAnswer === correctAnswer) {
+        const timeTaken = ((Date.now() - startTime) / 1000).toFixed(2);
+        const firstTry = attemptCount === 1 ? 'Yes' : 'No';
+
+        log.push({
+          question: `${num1} + ${num2}`,
+          answer: userAnswer,
+          time: timeTaken,
+          firstTry: firstTry
+        });
+
+        showFeedback(true);
+        setTimeout(generateQuestion, 1000);
+      } else {
+        showFeedback(false);
+        inputEl.value = '';
+      }
+    }
+  });
+
+  function showFeedback(isCorrect) {
+    if (isCorrect) {
+      feedbackEl.textContent = 'Correct!';
+      feedbackEl.className = 'correct';
+    } else {
+      feedbackEl.textContent = 'Wrong! Try again.';
+      feedbackEl.className = 'wrong';
+    }
+  }
+
+  function renderSummary() {
+    tableBody.innerHTML = '';
+    let correctCount = 0;
+    let correctTimes = [];
+
+    log.forEach(entry => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${entry.question}</td>
+        <td>${entry.answer}</td>
+        <td>${entry.time}</td>
+        <td>${entry.firstTry}</td>
+      `;
+      tableBody.appendChild(row);
+
+      if (entry.firstTry === 'Yes') {
+        correctCount++;
+        correctTimes.push(parseFloat(entry.time));
+      }
+    });
+
+    const avgTime = correctTimes.length > 0
+      ? (correctTimes.reduce((a, b) => a + b, 0) / correctTimes.length).toFixed(2)
+      : 'N/A';
+
+    summaryStats.innerHTML = `
+      <p><strong>Total Questions:</strong> ${log.length}</p>
+      <p><strong>Correct on First Try:</strong> ${correctCount}</p>
+      <p><strong>Average Time (Correct First Try):</strong> ${avgTime} s</p>
+    `;
+  }
+</script>
+
+</body>
+</html>
